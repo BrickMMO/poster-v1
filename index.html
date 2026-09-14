@@ -3,9 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test</title>
+    <title>LEGO Poster Control</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <h1>Test</h1>
+    <div class="container">
+        <header>
+            <h1>LEGO Poster Control</h1>
+            <p class="subtitle">Real-time Dashboard</p>
+        </header>
+
+        <div class="controls-grid">
+            <!-- Fans Control -->
+            <div class="control-card" id="fans-card" data-control="fans">
+                <div class="control-icon">
+                    <i class="fas fa-fan"></i>
+                </div>
+                <h2 class="control-label">Fans</h2>
+                <div class="control-status" id="fans-status">
+                    <span class="status-text">Loading...</span>
+                </div>
+                <button class="control-button" id="fans-button" aria-label="Toggle Fans">
+                    <span class="button-text">Toggle</span>
+                </button>
+            </div>
+
+            <!-- Lights Control -->
+            <div class="control-card" id="lights-card" data-control="lights">
+                <div class="control-icon">
+                    <i class="fas fa-lightbulb"></i>
+                </div>
+                <h2 class="control-label">Lights</h2>
+                <div class="control-status" id="lights-status">
+                    <span class="status-text">Loading...</span>
+                </div>
+                <button class="control-button" id="lights-button" aria-label="Toggle Lights">
+                    <span class="button-text">Toggle</span>
+                </button>
+            </div>
+        </div>
+
+        <footer>
+            <p class="connection-status" id="connection-status">
+                <span class="status-dot"></span>
+                <span class="status-label">Connecting to Firebase...</span>
+            </p>
+        </footer>
+    </div>
+
+    <!-- Firebase SDK (Compat version for global firebase object) -->
+    <script src="https://www.gstatic.com/firebasejs/10.6.0/firebase-compat.js"></script>
+
+    <!-- Application Script -->
+    <script src="app.js"></script>
 </body>
 </html>
