@@ -5,12 +5,13 @@ Firebase Real-time Control System for k107
 Firebase variables:
     lights-1
     fans-1
-    room-1
+    rooms-1
     display
 
 Threads:
     Generic -> OLED Screen 0 battery animation
     Fans    -> OLED Screen 7 fan animation
+    Rooms   -> 8 x 32 LED grid
 """
 
 import firebase_admin
@@ -22,7 +23,8 @@ import threading
 import random
 import smbus2
 import math
-import brickpi3
+
+from rpi_ws281x import PixelStrip, Color
 
 from luma.core.interface.serial import i2c
 from luma.oled.device import sh1106
@@ -42,7 +44,7 @@ SERVICE_ACCOUNT_KEY = 'serviceAccountKey.json'
 state = {
     'lights-1': None,
     'fans-1': None,
-    'room-1': None,
+    'rooms-1': None,
     'display': None
 }
 
@@ -105,10 +107,6 @@ def initialize_firebase():
                 f'Error: {SERVICE_ACCOUNT_KEY} not found'
             )
 
-            print(
-                'Please provide your Firebase service account key file'
-            )
-
             sys.exit(1)
 
         except Exception as e:
@@ -145,7 +143,7 @@ def setup_listeners():
     variables = [
         'lights-1',
         'fans-1',
-        'room-1',
+        'rooms-1',
         'display'
     ]
 
@@ -183,7 +181,6 @@ def generic():
         'Thread Started: Generic'
     )
 
-    # Create Screen 0
     with i2c_lock:
 
         select_tca_channel(0x01)
@@ -218,19 +215,16 @@ def generic():
 
             with canvas(device) as draw:
 
-                # Battery outline
                 draw.rectangle(
                     (1, 1, 85, 29),
                     outline="white"
                 )
 
-                # Battery terminal
                 draw.rectangle(
                     (86, 10, 90, 21),
                     fill="white"
                 )
 
-                # Battery level
                 fill_width = int(
                     80 * battery / 100
                 )
@@ -247,7 +241,6 @@ def generic():
                         fill="white"
                     )
 
-                # Percentage
                 text = f'{battery}%'
 
                 text_image = Image.new(
@@ -268,10 +261,7 @@ def generic():
                 )
 
                 text_image = text_image.resize(
-                    (
-                        32,
-                        32
-                    ),
+                    (32, 32),
                     Image.Resampling.NEAREST
                 )
 
@@ -299,24 +289,6 @@ def fans():
         'Thread Started: Fans'
     )
 
-    # Initialize BrickPi3
-    try:
-
-        BP = brickpi3.BrickPi3()
-
-        print(
-            'BrickPi3 initialized for motors'
-        )
-
-    except Exception as e:
-
-        print(
-            f'Error initializing BrickPi3: {e}'
-        )
-
-        BP = None
-
-    # Create Screen 7
     with i2c_lock:
 
         select_tca_channel(0x80)
@@ -346,74 +318,42 @@ def fans():
 
             select_tca_channel(0x80)
 
-            # ------------------------------------------
-            # FANS ON
-            # ------------------------------------------
-
             if state['fans-1']:
-
-                # Control motors at 50% speed
-                if BP is not None:
-
-                    BP.set_motor_power(
-                        BP.PORT_B,
-                        25
-                    )
-
-                    BP.set_motor_power(
-                        BP.PORT_C,
-                        25
-                    )
 
                 left_percent += left_direction
                 right_percent += right_direction
 
                 if left_percent >= 40:
-
                     left_direction = -1
 
                 if left_percent <= 20:
-
                     left_direction = 1
 
                 if right_percent >= 40:
-
                     right_direction = -1
 
                 if right_percent <= 20:
-
                     right_direction = 1
 
                 with canvas(device) as draw:
 
-                    # Left box
                     draw.rectangle(
                         (0, 0, 63, 63),
                         outline="white"
                     )
 
-                    # Right box
                     draw.rectangle(
                         (64, 0, 127, 63),
                         outline="white"
                     )
 
                     fan_display = [
-                        (
-                            32,
-                            22,
-                            left_percent
-                        ),
-                        (
-                            96,
-                            22,
-                            right_percent
-                        )
+                        (32, 22, left_percent),
+                        (96, 22, right_percent)
                     ]
 
                     for cx, cy, percent in fan_display:
 
-                        # Fan housing
                         draw.ellipse(
                             (
                                 cx - 17,
@@ -424,7 +364,6 @@ def fans():
                             outline="white"
                         )
 
-                        # Fan blades
                         for i in range(4):
 
                             a = (
@@ -449,18 +388,14 @@ def fans():
                             x2 = (
                                 cx +
                                 int(
-                                    math.cos(
-                                        a + 0.4
-                                    ) * 14
+                                    math.cos(a + 0.4) * 14
                                 )
                             )
 
                             y2 = (
                                 cy +
                                 int(
-                                    math.sin(
-                                        a + 0.4
-                                    ) * 14
+                                    math.sin(a + 0.4) * 14
                                 )
                             )
 
@@ -475,7 +410,6 @@ def fans():
                                 width=3
                             )
 
-                        # Fan center
                         draw.ellipse(
                             (
                                 cx - 3,
@@ -486,7 +420,6 @@ def fans():
                             fill="white"
                         )
 
-                        # Center percentage under fan
                         text = f'{percent}%'
 
                         bbox = draw.textbbox(
@@ -509,65 +442,35 @@ def fans():
                             fill="white"
                         )
 
-                # Rotate fans
                 angle += 0.3
 
                 if angle >= math.pi * 2:
-
                     angle -= math.pi * 2
 
-            # ------------------------------------------
-            # FANS OFF
-            # ------------------------------------------
-
             else:
-
-                # Stop motors
-                if BP is not None:
-
-                    BP.set_motor_power(
-                        BP.PORT_B,
-                        0
-                    )
-
-                    BP.set_motor_power(
-                        BP.PORT_C,
-                        0
-                    )
 
                 left_percent = 0
                 right_percent = 0
 
                 with canvas(device) as draw:
 
-                    # Left box
                     draw.rectangle(
                         (0, 0, 63, 63),
                         outline="white"
                     )
 
-                    # Right box
                     draw.rectangle(
                         (64, 0, 127, 63),
                         outline="white"
                     )
 
                     fan_display = [
-                        (
-                            32,
-                            22,
-                            0
-                        ),
-                        (
-                            96,
-                            22,
-                            0
-                        )
+                        (32, 22, 0),
+                        (96, 22, 0)
                     ]
 
                     for cx, cy, percent in fan_display:
 
-                        # Fan housing
                         draw.ellipse(
                             (
                                 cx - 17,
@@ -578,43 +481,28 @@ def fans():
                             outline="white"
                         )
 
-                        # Stationary fan blades
                         for i in range(4):
 
-                            a = (
-                                i * math.pi / 2
-                            )
+                            a = i * math.pi / 2
 
                             x1 = (
                                 cx +
-                                int(
-                                    math.cos(a) * 3
-                                )
+                                int(math.cos(a) * 3)
                             )
 
                             y1 = (
                                 cy +
-                                int(
-                                    math.sin(a) * 3
-                                )
+                                int(math.sin(a) * 3)
                             )
 
                             x2 = (
                                 cx +
-                                int(
-                                    math.cos(
-                                        a + 0.4
-                                    ) * 14
-                                )
+                                int(math.cos(a + 0.4) * 14)
                             )
 
                             y2 = (
                                 cy +
-                                int(
-                                    math.sin(
-                                        a + 0.4
-                                    ) * 14
-                                )
+                                int(math.sin(a + 0.4) * 14)
                             )
 
                             draw.line(
@@ -628,7 +516,6 @@ def fans():
                                 width=3
                             )
 
-                        # Fan center
                         draw.ellipse(
                             (
                                 cx - 3,
@@ -639,7 +526,6 @@ def fans():
                             fill="white"
                         )
 
-                        # Center 0%
                         text = f'{percent}%'
 
                         bbox = draw.textbbox(
@@ -666,18 +552,109 @@ def fans():
 
 
 # --------------------------------------------------
+# Rooms Thread
+# --------------------------------------------------
+
+def rooms():
+
+    print(
+        'Thread Started: Rooms'
+    )
+
+    LED_COUNT = 256
+    LED_PIN = 18
+
+    grid = PixelStrip(
+        LED_COUNT,
+        LED_PIN,
+        dma=10,
+        channel=0
+    )
+
+    grid.begin()
+
+    while True:
+
+        if state['rooms-1']:
+
+            for i in range(LED_COUNT):
+
+                # random choose 1, 2, 3
+                choice = random.choice([1, 2, 3])
+                if choice == 1:
+                    grid.setPixelColor(
+                        i,
+                        Color(0, 5, 1)
+                    )
+                elif choice == 2:
+                    grid.setPixelColor(
+                        i,
+                        Color(5, 1, 5)
+                    )
+                else:
+                    grid.setPixelColor(
+                        i,
+                        Color(0, 1, 5)
+                    )
+
+            grid.show()
+
+            time.sleep(1)
+
+        else:
+
+            # Turn entire grid off
+            for i in range(LED_COUNT):
+
+                grid.setPixelColor(
+                    i,
+                    Color(0, 0, 0)
+                )
+
+            grid.show()
+
+        time.sleep(0.1)
+
+def lights():
+
+    print('Lights test started')
+
+    LED_COUNT = 150
+    LED_PIN = 19
+
+    strip = PixelStrip(
+        LED_COUNT,
+        LED_PIN,
+        dma=11,
+        channel=1
+    )
+
+    strip.begin()
+
+    # Clear the strip first
+    for i in range(LED_COUNT):
+        strip.setPixelColor(i, Color(0, 0, 0))
+    strip.show()
+
+    time.sleep(1)
+
+    # Turn entire strip red
+    for i in range(LED_COUNT):
+        strip.setPixelColor(i, Color(1, 0, 0))
+
+    strip.show()
+
+    while True:
+        time.sleep(1)
+
+# --------------------------------------------------
 # Main
 # --------------------------------------------------
 
 def main():
 
-    print(
-        'Firebase k107 Control System'
-    )
-
-    print(
-        '=' * 50
-    )
+    print('Firebase k107 Control System')
+    print('=' * 50)
 
     initialize_firebase()
 
@@ -688,11 +665,9 @@ def main():
         'Monitoring for changes...'
     )
 
-    print(
-        'Press Ctrl+C to stop\n'
-    )
+    print('Press Ctrl+C to stop\n')
 
-    # Start Generic thread
+    # Generic
     generic_thread = threading.Thread(
         target=generic,
         daemon=True
@@ -700,11 +675,9 @@ def main():
 
     generic_thread.start()
 
-    print(
-        'Generic thread running.'
-    )
+    print('Generic thread running.')
 
-    # Start Fans thread
+    # Fans
     fans_thread = threading.Thread(
         target=fans,
         daemon=True
@@ -712,9 +685,27 @@ def main():
 
     fans_thread.start()
 
-    print(
-        'Fans thread running.'
+    print('Fans thread running.')
+
+    # Rooms
+    rooms_thread = threading.Thread(
+        target=rooms,
+        daemon=True
     )
+
+    rooms_thread.start()
+
+    print('Rooms thread running.')
+
+    # Lights
+    lights_thread = threading.Thread(
+        target=lights,
+        daemon=True
+    )
+
+    lights_thread.start()
+
+    print('Lights thread running.')
 
     try:
 
@@ -738,10 +729,6 @@ def main():
 
         sys.exit(0)
 
-
-# --------------------------------------------------
-# Start Program
-# --------------------------------------------------
 
 if __name__ == '__main__':
 
