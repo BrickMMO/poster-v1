@@ -21,7 +21,7 @@ body {
 
 .container {
     width: 100%;
-    max-width: 600px;
+    max-width: 700px;
 }
 
 /* ===========================
@@ -31,11 +31,11 @@ body {
 header {
     text-align: center;
     color: white;
-    margin-bottom: 40px;
+    margin-bottom: 30px;
 }
 
 header h1 {
-    font-size: 2.5rem;
+    font-size: 2rem;
     font-weight: 700;
     letter-spacing: -0.5px;
     margin-bottom: 8px;
@@ -48,128 +48,43 @@ header .subtitle {
 }
 
 /* ===========================
-   CONTROLS GRID
+   CONTROLS CONTAINER
    =========================== */
 
-.controls-grid {
+.controls-container {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
     margin-bottom: 30px;
 }
 
-@media (max-width: 500px) {
-    .controls-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
 /* ===========================
-   CONTROL CARD
+   CONTROL BOX (WINDOW)
    =========================== */
 
-.control-card {
-    background: white;
-    border-radius: 16px;
-    padding: 30px 20px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-}
-
-.control-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
-}
-
-.control-card.active {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-}
-
-.control-card.inactive {
-    background: #f5f5f5;
-    color: #999;
-}
-
-/* ===========================
-   CONTROL ICON
-   =========================== */
-
-.control-icon {
-    font-size: 3.5rem;
-    margin-bottom: 15px;
+.control-box {
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    padding: 10px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
 }
 
-.control-card.active .control-icon {
-    color: #667eea;
-    text-shadow: 0 0 20px rgba(102, 126, 234, 0.4);
-    animation: pulse-icon 2s ease-in-out infinite;
-}
-
-.control-card.inactive .control-icon {
-    color: #ccc;
-    opacity: 0.5;
-}
-
-@keyframes pulse-icon {
-    0%, 100% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.1);
-    }
+.control-box:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.4);
 }
 
 /* ===========================
-   CONTROL LABEL
+   BUTTON GRID (within each box)
    =========================== */
 
-.control-label {
-    font-size: 1.5rem;
-    font-weight: 600;
-    margin-bottom: 12px;
-    letter-spacing: -0.3px;
-}
-
-.control-card.active .control-label {
-    color: white;
-}
-
-.control-card.inactive .control-label {
-    color: #999;
-}
-
-/* ===========================
-   CONTROL STATUS
-   =========================== */
-
-.control-status {
-    margin-bottom: 15px;
-    min-height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.status-text {
-    font-size: 1.25rem;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-}
-
-.control-card.active .status-text {
-    color: #667eea;
-}
-
-.control-card.inactive .status-text {
-    color: #ccc;
+.button-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
 }
 
 /* ===========================
@@ -177,41 +92,70 @@ header .subtitle {
    =========================== */
 
 .control-button {
-    background: #667eea;
-    color: white;
-    border: none;
-    border-radius: 10px;
-    padding: 12px 30px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
     width: 100%;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    height: 60px;
+    border-radius: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    font-size: 1.8rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
-.control-button:hover {
-    background: #764ba2;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+.control-button:not(.placeholder):hover {
+    background: rgba(102, 126, 234, 0.6);
+    border-color: rgba(255, 255, 255, 0.6);
+    box-shadow: 0 12px 40px rgba(102, 126, 234, 0.4);
 }
 
-.control-button:active {
-    transform: translateY(0);
+.control-button:not(.placeholder):active {
 }
 
-.control-card.inactive .control-button {
-    background: #ccc;
-    cursor: not-allowed;
-    box-shadow: none;
+/* Active state */
+.control-button.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: rgba(255, 255, 255, 0.8);
+    box-shadow: 0 8px 30px rgba(102, 126, 234, 0.5);
 }
 
-.control-card.inactive .control-button:hover {
-    background: #ccc;
+.control-button.active:hover {
+    box-shadow: 0 12px 40px rgba(102, 126, 234, 0.7);
+}
+
+/* Inactive state */
+.control-button.inactive {
+    background: rgba(200, 200, 200, 0.2);
+    border-color: rgba(200, 200, 200, 0.3);
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.control-button.inactive:hover {
+    background: rgba(200, 200, 200, 0.2);
+    border-color: rgba(200, 200, 200, 0.3);
     transform: none;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
-/* ===========================
+/* Placeholder buttons (disabled) */
+.control-button.placeholder {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.3);
+    cursor: not-allowed;
+}
+
+.control-button.placeholder:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.1);
+    transform: none;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+/* =============================
    FOOTER / CONNECTION STATUS
    =========================== */
 
@@ -283,6 +227,26 @@ footer {
         transition: none !important;
     }
 }
+
+/* ===========================
+   RESPONSIVE DESIGN
+   =========================== */
+
+
+@media (max-width: 768px) {
+    .controls-container {
+        grid-template-columns: 1fr;
+    }
+
+    .control-button {
+        height: 65px;
+        font-size: 1.6rem;
+    }
+}
+
+/* ===========================
+   DARK MODE
+   =========================== */
 
 @media (prefers-color-scheme: dark) {
     body {
